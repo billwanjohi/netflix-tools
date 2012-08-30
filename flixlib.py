@@ -3,7 +3,7 @@
 
 import argparse
 import re
-from urllib2 import urlopen
+import urllib2
 import sys
 import time
 
@@ -35,18 +35,13 @@ def get_full_history(user):
         histindex += MAX_RESULTS
     return full_history
 
-def write_histories_to_file(netflix, accounts):
-    for account in accounts.itervalues():
+def write_histories_to_file(netflix, users):
+    for user in users:
         time.sleep(0.1)
-        user = netflix.get_user(account['access_token'],
-                                account['access_token_secret'])
-        time.sleep(0.1)
-        usr_deets = user.get_details()
-        name = usr_deets['user']['last_name']
-        print name
+        print user.nickname
         full_history = get_full_history(user)
         print 'writing to file'
-        with open('user_%s_hist.json' % name, 'w') as f:
+        with open('%s history.json' % user.nickname, 'w') as f:
             f.write(json.dumps(full_history))
 
 class Movie:
@@ -59,9 +54,11 @@ class Movie:
         for k,v in details['catalog_title'].items():
             setattr(self, k, v)
         self.predictions = {}
+    def __str__(self):
+        return '%s - %s' % (self.title['title_short'], self.average_rating)
 
 def pick_a_movie(location, netflix, users):
-    page = urlopen('%s?near=%s' % (GOOGLE_URL, location))
+    page = urllib2.urlopen('%s?near=%s' % (GOOGLE_URL, location))
     soup = BeautifulSoup(page)
     movies = []
     print 'finding movies'
@@ -113,27 +110,22 @@ def print_favorites(movies, user):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("zipcode")
+    parser.add_argument('-l', '--location')
+    parser.add_argument('-m', '--movie')
     args = parser.parse_args()
 
     with open('config.json', 'r') as f:
         config = json.loads(f.read())
-
-    # account = config['users']['billwanjohi']
-    # user = netflix.get_user(account['access_token'],
-    #                         account['access_token_secret'])
-    # results = netflix.search_titles("'%s'" % args.movie_title)
-    # ratings = user.get_rating([results['catalog'][0]['id']])
-    # for rating in ratings['ratings']:
-    #     print "%s : %s" % (rating['title'], rating['predicted_rating'])
-
     netflix, users = create_connections(config)
-    movies = pick_a_movie(args.zipcode, netflix, users)
-    # for k, v in movies.items():
-    #     if 'billwanjohi' in v:
-    #         print 'B %s A %s Name %s' % (round(v['billwanjohi'],1),
-    #                                      round(v['average'],1), k)
-    [print_favorites(movies, user) for user in users]
+
+    if args.location:
+        movies = pick_a_movie(args.location, netflix, users)
+        [print_favorites(movies, user) for user in users]
+    elif args.movie:
+        movie = Movie(netflix, args.movie)
+        print movie
+    else:
+        print "don't know what to do"
 
 if __name__ == "__main__":
     sys.exit(main())
