@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-'''Little script to grab rental history'''
 
 import argparse
 import re
@@ -112,6 +111,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-l', '--location')
     parser.add_argument('-m', '--movie')
+    parser.add_argument('-s', '--save', action='store_true')
     args = parser.parse_args()
 
     with open('config.json', 'r') as f:
@@ -124,6 +124,8 @@ def main():
     elif args.movie:
         movie = Movie(netflix, args.movie)
         print movie
+    elif args.save:
+        write_histories_to_file(netflix, users)
     else:
         print "don't know what to do"
 
