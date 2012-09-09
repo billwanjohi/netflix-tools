@@ -1,0 +1,5 @@
+You'll need to get yourself an app key at:
+    http://developer.netflix.com/member/register
+
+Then get your access tokens in some way similar to the get_authorization function here:
+    https://github.com/amalakar/pyflix2/blob/master/pyflix2/__main__.py
