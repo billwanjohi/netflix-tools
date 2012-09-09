@@ -1,0 +1,15 @@
+{
+  "app_name" : "yourappname",
+  "api_key" : "xxxxxx",
+  "api_secret" : "xxxxxx",
+  "users" : {
+    "person1" : {
+      "access_token" : "xxxxxx",
+      "access_token_secret": "xxxxxx"
+    },
+    "person2" : {
+      "access_token" : "xxxxxx",
+      "access_token_secret": "xxxxxx"
+    }
+  }
+}

@@ -15,9 +15,10 @@ GOOGLE_URL = "http://www.google.com/movies"
 EXPANDS.append('@average_rating')
 
 def get_full_history(user):
-    print 'grabbing first 500'
+    '''This relies on an API call that will be discontinued 9/15/2012'''
+    print 'grabbing first %s' % MAX_RESULTS
     time.sleep(0.1)
-    first500 = user.get_rental_history(max_results=500)
+    first500 = user.get_rental_history(max_results=MAX_RESULTS)
     full_history = first500['rental_history']
     histlength = first500['no_of_results']
     histindex = MAX_RESULTS
@@ -113,6 +114,8 @@ def main():
     parser.add_argument('-m', '--movie')
     parser.add_argument('-s', '--save', action='store_true')
     args = parser.parse_args()
+    if not (args.location or args.movie or args.save):
+        parser.error("must select an action")
 
     with open('config.json', 'r') as f:
         config = json.loads(f.read())
