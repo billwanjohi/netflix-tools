@@ -23,7 +23,6 @@ def get_full_history(user):
     histlength = first500['no_of_results']
     histindex = MAX_RESULTS
     while histindex < histlength:
-        time.sleep(0.1)
         print 'grabbing %s to %s' % (
             histindex, min(histindex + MAX_RESULTS - 1, histlength)
         )
@@ -37,7 +36,6 @@ def get_full_history(user):
 
 def write_histories_to_file(netflix, users):
     for user in users:
-        time.sleep(0.1)
         print user.nickname
         full_history = get_full_history(user)
         print 'writing to file'
