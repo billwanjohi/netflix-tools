@@ -46,25 +46,26 @@ class Movie:
     def __init__(self, netflix, gtitle):
         self.gtitle = gtitle
         time.sleep(0.1)
-        matches = netflix.search_titles(gtitle, max_results=1)
-        time.sleep(0.1)
-        details = netflix.get_title(matches['catalog'][0]['id'])
-        for k,v in details['catalog_title'].items():
+        matches = netflix.search_titles(gtitle, max_results=1, expand='@title')
+        for k,v in matches['catalog'][0].items():
             setattr(self, k, v)
         self.predictions = {}
+
     def __str__(self):
         return '%s - %s' % (self.title['title_short'], self.average_rating)
 
 def pick_a_movie(location, netflix, users):
-    page = urllib2.urlopen('%s?near=%s' % (GOOGLE_URL, location))
-    soup = BeautifulSoup(page)
     movies = []
     print 'finding movies'
-    for divmovie in soup.findAll('div', attrs={'class': 'movie'}):
-        title = divmovie.find('div', attrs={'class': 'name'}).text
-        if title in [movie.gtitle for movie in movies]: continue
-        movies.append(Movie(netflix, title))
-        # sys.stdout.write('.')
+    for block in range(0,50,10):
+        page = urllib2.urlopen('{0}?near={1}&start={2}&date={3}'.format(
+                    GOOGLE_URL, location, block, 1))
+        soup = BeautifulSoup(page)
+        for divmovie in soup.findAll('div', attrs={'class': 'movie'}):
+            title = divmovie.find('div', attrs={'class': 'name'}).text
+            if title in [movie.gtitle for movie in movies]: continue
+            movies.append(Movie(netflix, title))
+    print 'found {0} movies'.format(len(movies))
     for user in users:
         print 'parsing %s' % user.nickname
         all_ids = [movie.id for movie in movies]
@@ -99,7 +100,9 @@ def print_favorites(movies, user):
                         reverse=True)
     print user.nickname
     for movie in best_rated:
-        if movie.average_rating != movie.predictions[user.nickname]:
+        uniq = set(movie.predictions.values())
+        uniq.add(movie.average_rating)
+        if len(uniq) > 1:
             print 'Pr %s\tGT %s\tNT %s' % (
                 movie.predictions[user.nickname],
                 movie.gtitle[:20],
