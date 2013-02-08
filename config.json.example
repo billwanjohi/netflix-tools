@@ -4,10 +4,12 @@
   "api_secret" : "xxxxxx",
   "users" : {
     "person1" : {
+      "user_id" : "xxxxx",
       "access_token" : "xxxxxx",
       "access_token_secret": "xxxxxx"
     },
     "person2" : {
+      "user_id" : "xxxxx",
       "access_token" : "xxxxxx",
       "access_token_secret": "xxxxxx"
     }
