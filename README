@@ -1,5 +1,12 @@
+Purpose: Find movies showing nearby that Netflix thinks you'll like.
+
 You'll need to get yourself an app key at:
     http://developer.netflix.com/member/register
 
-Then get your access tokens in some way similar to the get_authorization function here:
-    https://github.com/amalakar/pyflix2/blob/master/pyflix2/__main__.py
+from pyflix2: access_token and access_token_secret can be obtained by executing 'python -m pyflix2 -a'
+
+todo:
+
+* merge results of all users, sort by least score, average score
+* extract director name from google results
+* use director name to verify movie match
