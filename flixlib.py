@@ -1,25 +1,25 @@
 #!/usr/bin/env python
 
 import argparse
-import re
 import urllib2
 import sys
 import time
 
 from BeautifulSoup import BeautifulSoup
 import simplejson as json
-from pyflix2 import *
+from pyflix2 import NetflixAPIV2, EXPANDS
 
 MAX_RESULTS = 500
 GOOGLE_URL = "http://www.google.com/movies"
 EXPANDS.append('@average_rating')
+
 
 class Movie:
     def __init__(self, netflix, gtitle):
         self.gtitle = gtitle
         time.sleep(0.1)
         matches = netflix.search_titles(gtitle, max_results=1, expand='@title')
-        for k,v in matches['catalog'][0].items():
+        for k, v in matches['catalog'][0].items():
             setattr(self, k, v)
         self.predictions = {}
 
@@ -30,13 +30,14 @@ class Movie:
 def pick_a_movie(location, netflix, users):
     movies = []
     print 'finding movies'
-    for block in range(0,50,10):
+    for block in range(0, 50, 10):
         page = urllib2.urlopen('{0}?near={1}&start={2}&date={3}'.format(
-                    GOOGLE_URL, location, block, 1))
+            GOOGLE_URL, location, block, 1))
         soup = BeautifulSoup(page)
         for divmovie in soup.findAll('div', attrs={'class': 'movie'}):
             title = divmovie.find('div', attrs={'class': 'name'}).text
-            if title in [movie.gtitle for movie in movies]: continue
+            if title in [movie.gtitle for movie in movies]:
+                continue
             movies.append(Movie(netflix, title))
     print 'found {0} movies'.format(len(movies))
     for user in users:
@@ -45,13 +46,14 @@ def pick_a_movie(location, netflix, users):
         ratings = []
         for i in range(0, len(all_ids), MAX_RESULTS):
             time.sleep(0.1)
-            partratings = user.get_rating(all_ids[i:i+MAX_RESULTS])['ratings']
+            partratings = user.get_rating(all_ids[i:i + MAX_RESULTS])['ratings']
             ratings.extend(partratings)
         for rating in ratings:
             for movie in movies:
                 if movie.id == rating['href']:
                     movie.predictions[user.last_name] = rating['predicted_rating']
     return movies
+
 
 def create_connections(config):
     netflix = NetflixAPIV2(config['app_name'],
@@ -68,6 +70,7 @@ def create_connections(config):
         users.append(user)
     return netflix, users
 
+
 def print_favorites(movies, user):
     best_rated = sorted(movies,
                         key=lambda x: x.predictions[user.last_name],
@@ -82,6 +85,7 @@ def print_favorites(movies, user):
                 movie.gtitle[:20],
                 movie.title['title_short'][:20]
             )
+
 
 def main():
     parser = argparse.ArgumentParser()
