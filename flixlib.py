@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import argparse
-import urllib2
+import re
 import sys
 import time
+import urllib2
 
 from BeautifulSoup import BeautifulSoup
 import simplejson as json
@@ -32,10 +33,11 @@ def pick_a_movie(location, netflix, users):
     print 'finding movies'
     for block in range(0, 50, 10):
         page = urllib2.urlopen('{0}?near={1}&start={2}&date={3}'.format(
-            GOOGLE_URL, location, block, 1))
+            GOOGLE_URL, location, block, 0))
         soup = BeautifulSoup(page)
         for divmovie in soup.findAll('div', attrs={'class': 'movie'}):
             title = divmovie.find('div', attrs={'class': 'name'}).text
+            title = re.sub(r'\b3d\b', '', title, flags=re.IGNORECASE)
             if title in [movie.gtitle for movie in movies]:
                 continue
             movies.append(Movie(netflix, title))
