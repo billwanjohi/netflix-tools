@@ -31,12 +31,14 @@ def main():
         config = json.loads(f.read())
     netflix, users = create_connections(config)
 
-    if args['--location']:
+    if args['predict'] == args['-'] == True:
+        for line in sys.stdin:
+            print Movie(netflix, line)
+    elif args['--location']:
         movies = pick_a_movie(args['--location'], netflix, users)
         [print_favorites(movies, user) for user in users]
     elif args['--movie']:
-        movie = Movie(netflix, args['--movie'])
-        print movie
+        print Movie(netflix, args['--movie'])
 
 
 class Movie:
