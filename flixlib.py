@@ -1,6 +1,15 @@
 #!/usr/bin/env python
 
-import argparse
+"""netflix_query
+
+Usage:
+  netflix_query.py predict -
+  netflix_query.py predict [--location=<location>]
+  netflix_query.py predict [--movie=<movie>]
+
+"""
+
+import docopt
 import re
 import sys
 import time
@@ -13,6 +22,21 @@ from pyflix2 import NetflixAPIV2, EXPANDS
 MAX_RESULTS = 500
 GOOGLE_URL = "http://www.google.com/movies"
 EXPANDS.append('@average_rating')
+
+
+def main():
+    args = docopt.docopt(__doc__)
+
+    with open('config.json', 'r') as f:
+        config = json.loads(f.read())
+    netflix, users = create_connections(config)
+
+    if args['--location']:
+        movies = pick_a_movie(args['--location'], netflix, users)
+        [print_favorites(movies, user) for user in users]
+    elif args['--movie']:
+        movie = Movie(netflix, args['--movie'])
+        print movie
 
 
 class Movie:
@@ -88,27 +112,6 @@ def print_favorites(movies, user):
                 movie.title['title_short'][:20]
             )
 
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-l', '--location')
-    parser.add_argument('-m', '--movie')
-    args = parser.parse_args()
-    if not (args.location or args.movie):
-        parser.error("must select an action")
-
-    with open('config.json', 'r') as f:
-        config = json.loads(f.read())
-    netflix, users = create_connections(config)
-
-    if args.location:
-        movies = pick_a_movie(args.location, netflix, users)
-        [print_favorites(movies, user) for user in users]
-    elif args.movie:
-        movie = Movie(netflix, args.movie)
-        print movie
-    else:
-        print "don't know what to do"
 
 if __name__ == "__main__":
     sys.exit(main())
