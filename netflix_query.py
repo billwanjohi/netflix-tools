@@ -52,10 +52,9 @@ def get_all_recommendations(user, start_index=0):
                 start_index=start_index,
                 max_results=MAX_RESULTS)['recommendations']
     except NetflixError, e:
-        if e[1]['status']['message'] == 'Gateway timeout':
-            print "Gateway timeout. Trying again"
-        else:
+        if e[1]['status']['message'] != 'Gateway timeout':
             raise e
+        print "Gateway timeout. Trying again"
         recommendations = get_all_recommendations(user, start_index)
     if len(recommendations) == MAX_RESULTS:
         recommendations += get_all_recommendations(user,
@@ -72,15 +71,31 @@ def recommend(args, users):
         for rec in user_recs:
             if rec.get('id') is None:
                 continue
-            candidates[rec['id']] = {
-                    'name': rec['title']['title_short'],
-                    user.last_name: rec['predicted_rating']}
+            candidates.setdefault(rec['id'], {})
+            candidates[rec['id']].update(
+                    {'name': rec['title']['title_short'],
+                     user.last_name: rec['predicted_rating']})
+    # fill in missing ratings
+    for user in users:
+        needs_ratings = filter(lambda x:
+                candidates[x].get(user.last_name) is None, candidates)
+        time.sleep(0.1)
+        # can't do more than a few at a time: Request Uri Too Long
+        more_ratings = user.get_predicted_ratings(
+                needs_ratings[:20])['ratings']
+        for rating in more_ratings:
+            candidates[rec['id']].update(
+                    {user.last_name: rec['predicted_rating']})
+    # add scores
     for candidate in candidates.values():
         candidate['combined'] = sum(filter(None,
                 [candidate.get(user.last_name) for user in users]))
+    # sort and print
     for candidate in sorted(candidates.values(),
             key=lambda x: x['combined'], reverse=True)[:20]:
         print candidate['name'], round(candidate['combined'], 2)
+    # TODO: also include rated titles
+    #actual_ratings =  user.get_actual_rating()
 
 
 class Movie:
