@@ -1,3 +1,4 @@
 BeautifulSoup
+docopt
 simplejson
 pyflix2

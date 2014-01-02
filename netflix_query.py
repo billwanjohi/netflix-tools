@@ -6,6 +6,7 @@ Usage:
   netflix_query.py predict -
   netflix_query.py predict [--location=<location>]
   netflix_query.py predict [--movie=<movie>]
+  netflix_query.py recommend
 
 """
 
@@ -31,7 +32,9 @@ def main():
         config = json.loads(f.read())
     netflix, users = create_connections(config)
 
-    if args['predict'] == args['-'] == True:
+    if args['recommend']:
+        recommend(args, users)
+    elif args['predict'] and args['-']:
         for line in sys.stdin:
             print Movie(netflix, line)
     elif args['--location']:
@@ -39,6 +42,30 @@ def main():
         [print_favorites(movies, user) for user in users]
     elif args['--movie']:
         print Movie(netflix, args['--movie'])
+
+
+def recommend(args, users):
+    """get all recommendations, construct hash, print results"""
+    candidates = {}
+    for user in users:
+        time.sleep(0.1)
+        user_recs = user.get_recommendations(
+                start_index=0, max_results=5)['recommendations']
+        # TODO: get more than one batch, recursively
+        #recommendations +=...
+        for rec in user_recs:
+            candidates[rec['id']] = {
+                    'name': rec['title']['title_short'],
+                    "{}_prediction".format(user.last_name):
+                        rec['predicted_rating']}
+        # TODO: also include rated titles
+        #actual_ratings =  user.get_actual_rating()
+    for candidate in candidates.values():
+        candidate['combined_rating'] = sum(filter(None,
+                (candidate.get('Taplin_prediction'),
+                 candidate.get('Wanjohi_prediction'))))
+    print sorted(candidates.values(),
+            key=lambda x: x['combined_rating'], reverse=True)
 
 
 class Movie:
