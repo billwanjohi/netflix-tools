@@ -18,7 +18,7 @@ import urllib2
 
 from BeautifulSoup import BeautifulSoup
 import simplejson as json
-from pyflix2 import NetflixAPIV2, EXPANDS
+from pyflix2 import NetflixAPIV2, EXPANDS, NetflixError
 
 MAX_RESULTS = 500
 GOOGLE_URL = "http://www.google.com/movies"
@@ -44,28 +44,43 @@ def main():
         print Movie(netflix, args['--movie'])
 
 
+def get_all_recommendations(user, start_index=0):
+    """recursive loop to get all available recommendations"""
+    time.sleep(0.1)
+    try:
+        recommendations = user.get_recommendations(
+                start_index=start_index,
+                max_results=MAX_RESULTS)['recommendations']
+    except NetflixError, e:
+        if e[1]['status']['message'] == 'Gateway timeout':
+            print "Gateway timeout. Trying again"
+        else:
+            raise e
+        recommendations = get_all_recommendations(user, start_index)
+    if len(recommendations) == MAX_RESULTS:
+        recommendations += get_all_recommendations(user,
+                start_index + MAX_RESULTS)
+    return recommendations
+
+
 def recommend(args, users):
     """get all recommendations, construct hash, print results"""
     candidates = {}
     for user in users:
         time.sleep(0.1)
-        user_recs = user.get_recommendations(
-                start_index=0, max_results=5)['recommendations']
-        # TODO: get more than one batch, recursively
-        #recommendations +=...
+        user_recs = get_all_recommendations(user)
         for rec in user_recs:
+            if rec.get('id') is None:
+                continue
             candidates[rec['id']] = {
                     'name': rec['title']['title_short'],
-                    "{}_prediction".format(user.last_name):
-                        rec['predicted_rating']}
-        # TODO: also include rated titles
-        #actual_ratings =  user.get_actual_rating()
+                    user.last_name: rec['predicted_rating']}
     for candidate in candidates.values():
-        candidate['combined_rating'] = sum(filter(None,
-                (candidate.get('Taplin_prediction'),
-                 candidate.get('Wanjohi_prediction'))))
-    print sorted(candidates.values(),
-            key=lambda x: x['combined_rating'], reverse=True)
+        candidate['combined'] = sum(filter(None,
+                [candidate.get(user.last_name) for user in users]))
+    for candidate in sorted(candidates.values(),
+            key=lambda x: x['combined'], reverse=True)[:20]:
+        print candidate['name'], round(candidate['combined'], 2)
 
 
 class Movie:
